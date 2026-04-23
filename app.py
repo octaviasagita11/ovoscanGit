@@ -210,7 +210,16 @@ AKURASI_MODEL = {
     "EfficientNetB0": 0.9568,
     "MobileNetV2"   : 0.8395,
 }
+
+# ── Google Drive FILE_ID untuk setiap model ──
+GDRIVE_IDS = {
+    "ResNet50"      : "1OKfavO7OhVVJAhS5H4AghUr8oTT2JWTc",
+    "EfficientNetB0": "1yPUgImX_FXnWOWFY9OqbR5K2rzEjxpfG",
+    "MobileNetV2"   : "1YRpEnykZjv9PMEn2UIE2E3KEEeZhz8J_",
+}
+
 MODEL_DIR = "models"
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 WARNA = {"fertil":"#4A7C59", "abnormal":"#C0392B", "infertil":"#D4820A"}
 EMOJI = {"fertil":"🟢",      "abnormal":"🔴",       "infertil":"🟡"}
@@ -226,11 +235,12 @@ SARAN = {
 }
 
 # ================================================================
-# LOAD MODEL
+# LOAD MODEL — Download dari Google Drive jika belum ada
 # ================================================================
 
-@st.cache_resource(show_spinner="⏳ Memuat model AI...")
+@st.cache_resource(show_spinner="⏳ Memuat model AI... (download pertama mungkin butuh beberapa menit)")
 def load_best_model():
+    import gdown
     from tensorflow.keras.models import load_model
     from tensorflow.keras.applications.resnet50      import preprocess_input as pre_resnet
     from tensorflow.keras.applications.efficientnet  import preprocess_input as pre_efficient
@@ -241,17 +251,26 @@ def load_best_model():
         "EfficientNetB0": pre_efficient,
         "MobileNetV2"   : pre_mobile,
     }
+
     for nama in sorted(AKURASI_MODEL, key=AKURASI_MODEL.get, reverse=True):
         path = os.path.join(MODEL_DIR, f"best_{nama}.h5")
+
+        # Download dari Google Drive jika belum ada
+        if not os.path.exists(path):
+            file_id = GDRIVE_IDS.get(nama, "")
+            url = f"https://drive.google.com/uc?id={file_id}"
+            try:
+                gdown.download(url, path, quiet=False, fuzzy=True)
+            except Exception as e:
+                st.warning(f"⚠️ Gagal download {nama}: {e}")
+                continue
+
         if os.path.exists(path):
             return load_model(path), nama, preprocess_map[nama]
 
     raise FileNotFoundError(
-        f"Tidak ada file model di folder '{MODEL_DIR}/'. "
-        "Pastikan minimal satu file .h5 tersedia:\n"
-        "  models/best_ResNet50.h5\n"
-        "  models/best_EfficientNetB0.h5\n"
-        "  models/best_MobileNetV2.h5"
+        "Tidak ada model yang berhasil dimuat dari Google Drive. "
+        "Pastikan FILE_ID sudah benar dan file dibagikan secara publik."
     )
 
 try:
@@ -365,7 +384,6 @@ if menu == "🔬 Deteksi Telur":
 
         if uploaded:
             img = Image.open(uploaded).convert("RGB")
-            # Batasi tinggi tampilan max 350px agar proporsional
             max_h = 350
             w, h  = img.size
             if h > max_h:
@@ -461,7 +479,6 @@ if menu == "🔬 Deteksi Telur":
             </div>
             """, unsafe_allow_html=True)
 
-            # Simpan riwayat — hanya sekali per file
             file_id = f"{uploaded.name}_{uploaded.size}"
             if st.session_state.last_saved_id != file_id:
                 st.session_state.riwayat.append({
@@ -785,13 +802,13 @@ elif menu == "ℹ️ Tentang Aplikasi":
             </tr>
             <tr style='background:#FDF6EC;'>
                 <td style='padding:10px; font-weight:700;'>EfficientNetB0</td>
-                <td style='padding:10px; text-align:center; color:#4A7C59; font-weight:700;'>83.95%</td>
+                <td style='padding:10px; text-align:center; color:#4A7C59; font-weight:700;'>95.68%</td>
                 <td style='padding:10px; text-align:center;'>⭐⭐⭐⭐</td>
                 <td style='padding:10px;'>Efisien & akurat</td>
             </tr>
             <tr style='background:#FFF8F0;'>
                 <td style='padding:10px; font-weight:700;'>MobileNetV2</td>
-                <td style='padding:10px; text-align:center; color:#D4820A; font-weight:700;'>95.68%</td>
+                <td style='padding:10px; text-align:center; color:#D4820A; font-weight:700;'>83.95%</td>
                 <td style='padding:10px; text-align:center;'>⭐⭐⭐⭐⭐</td>
                 <td style='padding:10px;'>Ringan, cocok mobile</td>
             </tr>
