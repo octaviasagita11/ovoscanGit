@@ -286,12 +286,16 @@ except Exception as e:
 # FUNGSI PREDIKSI
 # ================================================================
 
+CONFIDENCE_THRESHOLD = 60.0  # minimum confidence agar dianggap telur
+
 def prediksi(img_pil: Image.Image):
     img_arr  = np.array(img_pil.resize((IMG_SIZE, IMG_SIZE)), dtype=np.float32)
     img_proc = preprocess_fn(np.expand_dims(img_arr, axis=0))
     probs    = model.predict(img_proc, verbose=0)[0]
     idx      = np.argmax(probs)
-    return CLASS_NAMES[idx], float(probs[idx]) * 100, probs
+    conf     = float(probs[idx]) * 100
+    is_valid = conf >= CONFIDENCE_THRESHOLD
+    return CLASS_NAMES[idx], conf, probs, is_valid
 
 # ================================================================
 # SIDEBAR — selalu tampil, tidak bisa ditutup
@@ -426,18 +430,34 @@ if menu == "🔬 Deteksi Telur":
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>🔬 Hasil Analisis</div>", unsafe_allow_html=True)
 
-        if uploaded:
-            with st.spinner("🔍 Menganalisis telur..."):
-                kelas, conf, probs = prediksi(img)
+       if uploaded:
+    with st.spinner("🔍 Menganalisis telur..."):
+        kelas, conf, probs, is_valid = prediksi(img)
 
-            st.markdown(f"""
-            <div style='text-align:center; margin:1rem 0;'>
-                <div class='badge-{kelas}'>{EMOJI[kelas]} {kelas.upper()}</div>
-                <div style='font-size:0.9rem; color:#5A3E28;
-                            margin-top:0.8rem; font-style:italic;'>
-                    {DESKRIPSI[kelas]}
-                </div>
+    if not is_valid:
+        st.markdown("""
+        <div style='text-align:center; padding:2rem; background:#FFF3CD;
+                    border:2px solid #FFC107; border-radius:16px; margin:1rem 0;'>
+            <div style='font-size:3rem;'>⚠️</div>
+            <div style='font-family:Playfair Display,serif; font-size:1.3rem;
+                        font-weight:700; color:#856404; margin:0.5rem 0;'>
+                Bukan Foto Telur
             </div>
+            <div style='font-size:0.9rem; color:#856404;'>
+                Gambar yang diupload tidak terdeteksi sebagai telur ayam.<br>
+                Pastikan foto menampilkan telur dengan jelas saat proses candling.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style='text-align:center; margin:1rem 0;'>
+            <div class='badge-{kelas}'>{EMOJI[kelas]} {kelas.upper()}</div>
+            <div style='font-size:0.9rem; color:#5A3E28;
+                        margin-top:0.8rem; font-style:italic;'>
+                {DESKRIPSI[kelas]}
+            </div>
+        </div>
             <hr class='divider'>
             <div style='margin:1rem 0;'>
                 <div style='display:flex; justify-content:space-between;
