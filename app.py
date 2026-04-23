@@ -40,13 +40,9 @@ st.markdown("""
     --shadow     : rgba(107, 63, 31, 0.15);
 }
 
-/* ── Background ── */
 .stApp { background-color: var(--cream); font-family: 'Lato', sans-serif; }
-
-/* ── Sembunyikan elemen default streamlit ── */
 #MainMenu, footer, header { visibility: hidden; }
 
-/* ── PAKSA SIDEBAR SELALU TAMPIL ── */
 section[data-testid="stSidebar"] {
     display:     flex        !important;
     visibility:  visible     !important;
@@ -59,18 +55,15 @@ section[data-testid="stSidebar"] {
     border-right: 3px solid var(--amber) !important;
 }
 
-/* Sembunyikan tombol collapse (panah) agar tidak bisa ditutup */
 button[data-testid="collapsedControl"],
 [data-testid="collapsedControl"] {
     display: none !important;
     visibility: hidden !important;
 }
 
-/* Warna teks sidebar */
 section[data-testid="stSidebar"] * { color: #FDF6EC !important; }
 section[data-testid="stSidebar"] .stRadio label { cursor: pointer; }
 
-/* ── Header aplikasi ── */
 .app-header {
     background: linear-gradient(135deg, #3D1F0A 0%, #6B3F1F 50%, #A0613A 100%);
     border-radius: 20px; padding: 2rem 3rem; margin-bottom: 2rem;
@@ -97,7 +90,6 @@ section[data-testid="stSidebar"] .stRadio label { cursor: pointer; }
     text-transform: uppercase; margin-top: 0.5rem; position: relative;
 }
 
-/* ── Card ── */
 .card {
     background: var(--warm-white); border-radius: 16px; padding: 1.5rem;
     border: 1px solid var(--border); box-shadow: 0 4px 20px var(--shadow);
@@ -109,14 +101,12 @@ section[data-testid="stSidebar"] .stRadio label { cursor: pointer; }
     padding-bottom: 0.5rem; margin-bottom: 1rem;
 }
 
-/* ── Upload area ── */
 .upload-area {
     background: linear-gradient(135deg, #FFF8F0, #FDF6EC);
     border: 3px dashed var(--amber-light); border-radius: 20px;
     padding: 2.5rem; text-align: center;
 }
 
-/* ── Badge hasil ── */
 .badge-fertil {
     background: linear-gradient(135deg, #2D6A4F, #4A7C59);
     color: white; padding: 1rem 2rem; border-radius: 50px;
@@ -139,7 +129,6 @@ section[data-testid="stSidebar"] .stRadio label { cursor: pointer; }
     font-family: 'Playfair Display', serif;
 }
 
-/* ── Stat box ── */
 .stat-box {
     background: var(--warm-white); border-radius: 14px; padding: 1.2rem;
     text-align: center; border: 1px solid var(--border);
@@ -154,26 +143,22 @@ section[data-testid="stSidebar"] .stRadio label { cursor: pointer; }
     color: var(--text-mid); margin-top: 0.3rem;
 }
 
-/* ── Confidence bar ── */
 .conf-bar-bg {
     background: #E8D5B7; border-radius: 10px; height: 12px;
     margin: 4px 0 10px 0; overflow: hidden;
 }
 .conf-bar-fill { height: 100%; border-radius: 10px; }
 
-/* ── Info box kelas ── */
 .info-fertil   { background:#D5F5E3; border-left:5px solid #4A7C59; border-radius:8px; padding:1rem; margin-bottom:0.5rem; }
 .info-abnormal { background:#FADBD8; border-left:5px solid #C0392B; border-radius:8px; padding:1rem; margin-bottom:0.5rem; }
 .info-infertil { background:#FDEBD0; border-left:5px solid #D4820A; border-radius:8px; padding:1rem; margin-bottom:0.5rem; }
 
-/* ── Divider ── */
 .divider {
     border: none; height: 2px;
     background: linear-gradient(90deg, transparent, var(--amber-light), transparent);
     margin: 1.5rem 0;
 }
 
-/* ── Tombol ── */
 .stButton > button {
     background: linear-gradient(135deg, #6B3F1F, #A0613A);
     color: white; border: none; border-radius: 10px;
@@ -205,13 +190,14 @@ for key, val in [
 
 CLASS_NAMES = ['abnormal', 'fertil', 'infertil']
 IMG_SIZE    = 224
+CONFIDENCE_THRESHOLD = 60.0
+
 AKURASI_MODEL = {
     "ResNet50"      : 0.9630,
     "EfficientNetB0": 0.9568,
     "MobileNetV2"   : 0.8395,
 }
 
-# ── Google Drive FILE_ID untuk setiap model ──
 GDRIVE_IDS = {
     "ResNet50"      : "1OKfavO7OhVVJAhS5H4AghUr8oTT2JWTc",
     "EfficientNetB0": "1yPUgImX_FXnWOWFY9OqbR5K2rzEjxpfG",
@@ -235,13 +221,12 @@ SARAN = {
 }
 
 # ================================================================
-# LOAD MODEL — Download dari Google Drive jika belum ada
+# LOAD MODEL
 # ================================================================
 
 @st.cache_resource(show_spinner="⏳ Memuat model AI... (download pertama mungkin butuh beberapa menit)")
 def load_best_model():
     import gdown
-    import os
     os.environ["KERAS_BACKEND"] = "tensorflow"
     from keras.models import load_model
     from keras.applications.resnet50     import preprocess_input as pre_resnet
@@ -257,7 +242,6 @@ def load_best_model():
     for nama in sorted(AKURASI_MODEL, key=AKURASI_MODEL.get, reverse=True):
         path = os.path.join(MODEL_DIR, f"best_{nama}.h5")
 
-        # Download dari Google Drive jika belum ada
         if not os.path.exists(path):
             file_id = GDRIVE_IDS.get(nama, "")
             url = f"https://drive.google.com/uc?id={file_id}"
@@ -286,8 +270,6 @@ except Exception as e:
 # FUNGSI PREDIKSI
 # ================================================================
 
-CONFIDENCE_THRESHOLD = 60.0  # minimum confidence agar dianggap telur
-
 def prediksi(img_pil: Image.Image):
     img_arr  = np.array(img_pil.resize((IMG_SIZE, IMG_SIZE)), dtype=np.float32)
     img_proc = preprocess_fn(np.expand_dims(img_arr, axis=0))
@@ -298,7 +280,7 @@ def prediksi(img_pil: Image.Image):
     return CLASS_NAMES[idx], conf, probs, is_valid
 
 # ================================================================
-# SIDEBAR — selalu tampil, tidak bisa ditutup
+# SIDEBAR
 # ================================================================
 
 with st.sidebar:
@@ -393,7 +375,7 @@ if menu == "🔬 Deteksi Telur":
             max_h = 350
             w, h  = img.size
             if h > max_h:
-                ratio      = max_h / h
+                ratio       = max_h / h
                 display_img = img.resize((int(w * ratio), max_h), Image.LANCZOS)
             else:
                 display_img = img
@@ -430,10 +412,10 @@ if menu == "🔬 Deteksi Telur":
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>🔬 Hasil Analisis</div>", unsafe_allow_html=True)
 
-       if uploaded:
+        if uploaded:
             with st.spinner("🔍 Menganalisis telur..."):
                 kelas, conf, probs, is_valid = prediksi(img)
-        
+
             if not is_valid:
                 st.markdown("""
                 <div style='text-align:center; padding:2rem; background:#FFF3CD;
@@ -449,6 +431,7 @@ if menu == "🔬 Deteksi Telur":
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
             else:
                 st.markdown(f"""
                 <div style='text-align:center; margin:1rem 0;'>
@@ -457,63 +440,63 @@ if menu == "🔬 Deteksi Telur":
                                 margin-top:0.8rem; font-style:italic;'>
                         {DESKRIPSI[kelas]}
                     </div>
-            </div>
-            <hr class='divider'>
-            <div style='margin:1rem 0;'>
-                <div style='display:flex; justify-content:space-between;
-                            font-size:0.85rem; color:#5A3E28; margin-bottom:4px;'>
-                    <span>🎯 Tingkat Keyakinan Model</span>
-                    <span style='font-weight:700; color:{WARNA[kelas]};'>{conf:.1f}%</span>
                 </div>
-                <div class='conf-bar-bg'>
-                    <div class='conf-bar-fill'
-                         style='width:{conf}%; background:{WARNA[kelas]};'></div>
-                </div>
-            </div>
-            <div style='font-size:0.85rem; font-weight:700; color:#5A3E28;
-                        margin:1rem 0 0.5rem;'>📊 Probabilitas per Kelas:</div>
-            """, unsafe_allow_html=True)
-
-            for c, p in zip(CLASS_NAMES, probs):
-                pct  = float(p) * 100
-                bold = "font-weight:700;" if c == kelas else ""
-                st.markdown(f"""
-                <div style='margin-bottom:8px;'>
+                <hr class='divider'>
+                <div style='margin:1rem 0;'>
                     <div style='display:flex; justify-content:space-between;
-                                font-size:0.82rem; {bold} color:#2C1A0E;'>
-                        <span>{EMOJI[c]} {c.capitalize()}</span>
-                        <span style='color:{WARNA[c]};'>{pct:.2f}%</span>
+                                font-size:0.85rem; color:#5A3E28; margin-bottom:4px;'>
+                        <span>🎯 Tingkat Keyakinan Model</span>
+                        <span style='font-weight:700; color:{WARNA[kelas]};'>{conf:.1f}%</span>
                     </div>
                     <div class='conf-bar-bg'>
                         <div class='conf-bar-fill'
-                             style='width:{pct}%; background:{WARNA[c]}; opacity:0.85;'></div>
+                             style='width:{conf}%; background:{WARNA[kelas]};'></div>
                     </div>
+                </div>
+                <div style='font-size:0.85rem; font-weight:700; color:#5A3E28;
+                            margin:1rem 0 0.5rem;'>📊 Probabilitas per Kelas:</div>
+                """, unsafe_allow_html=True)
+
+                for c, p in zip(CLASS_NAMES, probs):
+                    pct  = float(p) * 100
+                    bold = "font-weight:700;" if c == kelas else ""
+                    st.markdown(f"""
+                    <div style='margin-bottom:8px;'>
+                        <div style='display:flex; justify-content:space-between;
+                                    font-size:0.82rem; {bold} color:#2C1A0E;'>
+                            <span>{EMOJI[c]} {c.capitalize()}</span>
+                            <span style='color:{WARNA[c]};'>{pct:.2f}%</span>
+                        </div>
+                        <div class='conf-bar-bg'>
+                            <div class='conf-bar-fill'
+                                 style='width:{pct}%; background:{WARNA[c]}; opacity:0.85;'></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <hr class='divider'>
+                <div class='info-{kelas}'>
+                    <div style='font-weight:700; font-size:0.9rem; margin-bottom:4px;'>
+                        📋 Rekomendasi Tindakan:
+                    </div>
+                    <div style='font-size:0.85rem;'>{SARAN[kelas]}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown(f"""
-            <hr class='divider'>
-            <div class='info-{kelas}'>
-                <div style='font-weight:700; font-size:0.9rem; margin-bottom:4px;'>
-                    📋 Rekomendasi Tindakan:
-                </div>
-                <div style='font-size:0.85rem;'>{SARAN[kelas]}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            file_id = f"{uploaded.name}_{uploaded.size}"
-            if st.session_state.last_saved_id != file_id:
-                st.session_state.riwayat.append({
-                    "No"        : len(st.session_state.riwayat) + 1,
-                    "Waktu"     : datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    "File"      : uploaded.name,
-                    "Hasil"     : kelas.upper(),
-                    "Confidence": f"{conf:.1f}%",
-                    "Model"     : nama_model,
-                })
-                st.session_state.total_scan        += 1
-                st.session_state[f"total_{kelas}"] += 1
-                st.session_state.last_saved_id      = file_id
+                file_id = f"{uploaded.name}_{uploaded.size}"
+                if st.session_state.last_saved_id != file_id:
+                    st.session_state.riwayat.append({
+                        "No"        : len(st.session_state.riwayat) + 1,
+                        "Waktu"     : datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                        "File"      : uploaded.name,
+                        "Hasil"     : kelas.upper(),
+                        "Confidence": f"{conf:.1f}%",
+                        "Model"     : nama_model,
+                    })
+                    st.session_state.total_scan        += 1
+                    st.session_state[f"total_{kelas}"] += 1
+                    st.session_state.last_saved_id      = file_id
 
         else:
             st.markdown("""
