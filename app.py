@@ -242,11 +242,11 @@ SARAN = {
 def load_best_model():
     import gdown
     import os
-os.environ["KERAS_BACKEND"] = "tensorflow"
-from keras.models import load_model
-from keras.applications.resnet50     import preprocess_input as pre_resnet
-from keras.applications.efficientnet import preprocess_input as pre_efficient
-from keras.applications.mobilenet_v2 import preprocess_input as pre_mobile
+    os.environ["KERAS_BACKEND"] = "tensorflow"
+    from keras.models import load_model
+    from keras.applications.resnet50     import preprocess_input as pre_resnet
+    from keras.applications.efficientnet import preprocess_input as pre_efficient
+    from keras.applications.mobilenet_v2 import preprocess_input as pre_mobile
 
     preprocess_map = {
         "ResNet50"      : pre_resnet,
