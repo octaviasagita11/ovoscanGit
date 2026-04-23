@@ -262,7 +262,7 @@ def load_best_model():
             file_id = GDRIVE_IDS.get(nama, "")
             url = f"https://drive.google.com/uc?id={file_id}"
             try:
-                gdown.download(url, path, quiet=False, fuzzy=True)
+                gdown.download(url, path, quiet=False)
             except Exception as e:
                 st.warning(f"⚠️ Gagal download {nama}: {e}")
                 continue
