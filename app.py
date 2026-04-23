@@ -241,10 +241,12 @@ SARAN = {
 @st.cache_resource(show_spinner="⏳ Memuat model AI... (download pertama mungkin butuh beberapa menit)")
 def load_best_model():
     import gdown
-    from tensorflow.keras.models import load_model
-    from tensorflow.keras.applications.resnet50      import preprocess_input as pre_resnet
-    from tensorflow.keras.applications.efficientnet  import preprocess_input as pre_efficient
-    from tensorflow.keras.applications.mobilenet_v2  import preprocess_input as pre_mobile
+    import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
+from keras.models import load_model
+from keras.applications.resnet50     import preprocess_input as pre_resnet
+from keras.applications.efficientnet import preprocess_input as pre_efficient
+from keras.applications.mobilenet_v2 import preprocess_input as pre_mobile
 
     preprocess_map = {
         "ResNet50"      : pre_resnet,
